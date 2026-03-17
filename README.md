@@ -33,7 +33,10 @@ All configuration parameters can be found in the file __config.js__.  Update onl
 | RADDEC_TARGETS            | Array of targets for raddec data (see below)    |
 | DIRACT_PROXIMITY_TARGETS  | Array of targets for diract-proximity data      |
 | DIRACT_DIGEST_TARGETS     | Array of targets for diract-digest data         |
-| ES_NODE                   | Path to Elasticsearch node                      |
+| PG_HOST                   | Hostname or IP address of PostgreSQL database   |
+| PG_USER                   | Username for PostgreSQL database                |
+| PG_PASSWORD               | Password for PostgreSQL database                |
+| PG_DATABASE               | Name of PostgreSQL database                     |
 | IS_UDP_BROADCAST          | Set to true if target is UDP broadcast (default: true) |
 | LISTEN_TO_REEL            | Enable listener on reel module (default: true)  |
 | LISTEN_TO_TCPDUMP         | Enable listener on tcpdump (default: false)     |
@@ -47,7 +50,7 @@ All configuration parameters can be found in the file __config.js__.  Update onl
 Each raddec target in the RADDEC_TARGETS array is an object with the following properties:
 - _host_: an IP address or hostname (ex: '192.168.1.10')
 - _port_: the target port (default: 50001)
-- _protocol_: either 'udp', 'webhook' (HTTP POST), 'elasticsearch' or 'ua' (Google Analytics)
+- _protocol_: either 'udp', 'webhook' (HTTP POST), 'postgresql' or 'ua' (Google Analytics)
 - _tid_: required only for Google Analytics (ex: 'UA-1234567-8')
 - _options_: based on the _protocol_ as follows
     * webhook defaults are { useHttps: false, path: "/raddecs" }
