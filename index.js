@@ -1,5 +1,5 @@
 /*
- * Copyright reelyActive 2018-2022
+ * Copyright reelyActive 2018-2026
  * We believe in an open Internet of Things
  */
 
@@ -11,13 +11,13 @@ const http = require('http');
 const https = require('https');
 const dns = require('dns');
 const querystring = require('querystring');
+const pg = require('pg');
 const Barnowl = require('barnowl');
 const BarnowlReel = require('barnowl-reel');
 const BarnowlTcpdump = require('barnowl-tcpdump');
 const DirActDigester = require('diract-digester');
 const Raddec = require('raddec');
 const RaddecFilter = require('raddec-filter');
-const { Client } = require('@elastic/elasticsearch');
 const config = require('./config');
 
 // Load the configuration parameters
@@ -33,7 +33,7 @@ const raddecOptions = {
     includePackets: config.includePackets
 };
 const raddecFilterParameters = config.raddecFilterParameters;
-const useElasticsearch = (config.esNode !== null);
+const usePostgres = (config.pgHost !== null);
 const useDigester = (config.diractProximityTargets.length > 0) ||
                     (config.diractDigestTargets.length > 0);
 let digesterOptions = {};
@@ -60,11 +60,7 @@ const REEL_DECODING_OPTIONS = {
     minPacketLength: 8,
     maxPacketLength: 39
 };
-const ES_MAX_QUEUED_DOCS = 12;
-const ES_RADDEC_INDEX = 'raddec';
-const ES_DIRACT_PROXIMITY_INDEX = 'diract-proximity';
-const ES_DIRACT_DIGEST_INDEX = 'diract-digest';
-const ES_MAPPING_TYPE = '_doc';
+
 
 // Enable watchdog
 if(config.enableWatchdog) {
@@ -84,13 +80,18 @@ client.on('listening', function() {
 let httpAgent = new http.Agent({ keepAlive: true });
 let httpsAgent = new https.Agent({ keepAlive: true });
 
-// Create Elasticsearch client
-let esClient;
-let esDocs;
-let isEsCallPending = false;
-if(useElasticsearch) {
-  esClient = new Client({ node: config.esNode });
-  esDocs = new Map();
+// Create PostgreSQL client pool
+let pgPool;
+if(usePostgres) {
+  pgPool = new pg.Pool({ user: config.pgUser,
+                         password: config.pgPassword,
+                         host: config.pgHost,
+                         database: config.pgDatabase });
+  pgPool.on('error', (error, client) => { if(error) { handleError(error); } });
+  pgPool.connect((error, client, release) => {
+    if(error) { handleError(error); }
+    release();
+  });
 }
 
 // Create raddec filter
@@ -151,12 +152,8 @@ function forward(raddec, target) {
       target.options.path = target.options.path || DEFAULT_RADDEC_PATH;
       post(raddec, target);
       break;
-    case 'elasticsearch':
-      let id = raddec.timestamp + '-' + raddec.transmitterId + '-' +
-               raddec.transmitterIdType;
-      let esRaddec = raddec.toFlattened(raddecOptions);
-      esRaddec.timestamp = new Date(esRaddec.timestamp).toISOString();
-      esHandleDoc(id, ES_RADDEC_INDEX, esRaddec);
+    case 'postgresql':
+      pgHandleRaddec(raddec);
       break;
     case 'ua':
       target.host = target.host || DEFAULT_UA_HOST;
@@ -225,48 +222,16 @@ function post(data, target, toQueryString) {
 
 
 /**
- * Handle an Elasticsearch doc, initiating bulk update if no API call pending.
- * @param {Object} params The parameters.
+ * Insert a raddec into the remote PostgreSQL database.
+ * @param {Raddec} raddec The raddec to insert.
  */
-function esHandleDoc(id, index, doc) {
-  while(esDocs.size >= ES_MAX_QUEUED_DOCS) {
-    let oldestKey = esDocs.keys().next().value;
-    esDocs.delete(oldestKey);
-  }
-
-  esDocs.set({ id: id, index: index }, doc);
-
-  if(!isEsCallPending) {
-    esBulk();
-  }
-}
-
-
-/**
- * Perform Elasticsearch bulk update iteratively until there are no more docs.
- */
-function esBulk() {
-  let body = [];
-  isEsCallPending = true;
-
-  esDocs.forEach(function(doc, key) {
-    body.push({ "create": { "_index": key.index, "_id": key.id } });
-    body.push(doc);
-  });
-  esDocs.clear();
-
-  esClient.bulk({ body: body }, function(err, result) {
-    let isMoreEsDocs = (esDocs.size > 0);
-    if(err) {
-      handleError(err);
-    }
-    if(isMoreEsDocs) {
-      esBulk();
-    }
-    else {
-      isEsCallPending = false;
-    }
-  });
+function pgInsertRaddec(raddec) {
+  let flatRaddec = raddec.toFlattened(raddecOptions);
+  let text = 'INSERT INTO raddec (transmitterSignature, timestamp, raddec) ' +
+             'VALUES ($1, $2, $3) RETURNING _storeId';
+  let values = [ raddec.signature, new Date(raddec.initialTime),
+                 JSON.stringify(flatRaddec) ];
+  pgPool.query(text, values, (err, res) => { if(err) { handleError(err); } });
 }
 
 
@@ -279,12 +244,6 @@ function handleDirActProximity(proximity) {
     switch(target.protocol) {
       case 'webhook':
         post(proximity, target);
-        break;
-      case 'elasticsearch':
-        let id = proximity.timestamp + '-' + proximity.instanceId;
-        let esProximity = Object.assign({}, proximity);
-        esProximity.timestamp = new Date(proximity.timestamp).toISOString();
-        esHandleDoc(id, ES_DIRACT_PROXIMITY_INDEX, esProximity);
         break;
     }
   });
@@ -300,12 +259,6 @@ function handleDirActDigest(digest) {
     switch(target.protocol) {
       case 'webhook':
         post(digest, target);
-        break;
-      case 'elasticsearch':
-        let id = digest.timestamp + '-' + digest.instanceId;
-        let esDigest = Object.assign({}, digest);
-        esDigest.timestamp = new Date(digest.timestamp).toISOString();
-        esHandleDoc(id, ES_DIRACT_DIGEST_INDEX, esDigest);
         break;
     }
   });

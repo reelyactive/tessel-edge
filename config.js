@@ -1,5 +1,5 @@
 /*
- * Copyright reelyActive 2018-2022
+ * Copyright reelyActive 2018-2026
  * We believe in an open Internet of Things
  */
 
@@ -17,7 +17,10 @@ const DIRACT_PROXIMITY_TARGETS = [
 ];
 const DIRACT_DIGEST_TARGETS = [
 ];
-const ES_NODE = null;            // Example: 'http://192.168.1.10:9200'
+const PG_HOST = null;            // Example: '12.34.56.78'
+const PG_USER = 'reelyactive';
+const PG_PASSWORD = 'paretoanywhere';
+const PG_DATABASE = 'pareto_anywhere';
 const IS_UDP_BROADCAST = true;
 const LISTEN_TO_REEL = true;
 const LISTEN_TO_TCPDUMP = false;
@@ -42,7 +45,10 @@ const IS_DEBUG_MODE = false;
 module.exports.raddecTargets = RADDEC_TARGETS;
 module.exports.diractProximityTargets = DIRACT_PROXIMITY_TARGETS;
 module.exports.diractDigestTargets = DIRACT_DIGEST_TARGETS;
-module.exports.esNode = ES_NODE;
+module.exports.pgHost = PG_HOST;
+module.exports.pgUser = PG_USER;
+module.exports.pgPassword = PG_PASSWORD;
+module.exports.pgDatabase = PG_DATABASE;
 module.exports.isUdpBroadcast = IS_UDP_BROADCAST;
 module.exports.listenToReel = LISTEN_TO_REEL;
 module.exports.listenToTcpdump = LISTEN_TO_TCPDUMP;
