@@ -72,7 +72,7 @@ updateDNS();
 
 // Create a UDP client
 let client = dgram.createSocket('udp4');
-client.on('listening', function() {
+client.on('listening', () => {
   client.setBroadcast(config.isUdpBroadcast);
 });
 
@@ -116,10 +116,10 @@ if(config.listenToTcpdump) {
 }
 
 // Forward the raddec to each target while pulsing the green LED
-barnowl.on('raddec', function(raddec) {
+barnowl.on('raddec', (raddec) => {
   tessel.led[2].on();
   if(filter.isPassing(raddec)) {
-    raddecTargets.forEach(function(target) {
+    raddecTargets.forEach((target) => {
       forward(raddec, target);
     });
     if(useDigester) {
@@ -130,7 +130,7 @@ barnowl.on('raddec', function(raddec) {
 });
 
 // Blue LED continuously toggles to indicate program is running
-setInterval(function() { tessel.led[3].toggle(); }, 500);
+setInterval(() => { tessel.led[3].toggle(); }, 500);
 
 
 /**
@@ -209,11 +209,11 @@ function post(data, target, toQueryString) {
   let req;
   if(target.options.useHttps) {
     options.agent = httpsAgent;
-    req = https.request(options, function(res) { });
+    req = https.request(options, (res) => { });
   }
   else {
     options.agent = httpAgent;
-    req = http.request(options, function(res) { });
+    req = http.request(options, (res) => { });
   }
   req.on('error', handleError);
   req.write(dataString);
@@ -240,7 +240,7 @@ function pgInsertRaddec(raddec) {
  * @param {Object} proximity The DirAct proximity data.
  */
 function handleDirActProximity(proximity) {
-  diractProximityTargets.forEach(function(target) {
+  diractProximityTargets.forEach((target) => {
     switch(target.protocol) {
       case 'webhook':
         post(proximity, target);
@@ -255,7 +255,7 @@ function handleDirActProximity(proximity) {
  * @param {Object} digest The DirAct digest data.
  */
 function handleDirActDigest(digest) {
-  diractDigestTargets.forEach(function(target) {
+  diractDigestTargets.forEach((target) => {
     switch(target.protocol) {
       case 'webhook':
         post(digest, target);
@@ -273,16 +273,16 @@ function updateDNS() {
   let nextUpdateMilliseconds = STANDARD_DNS_UPDATE_MILLISECONDS;
 
   // If there are invalid UDP addresses, shorten the update period
-  raddecTargets.forEach(function(target) {
+  raddecTargets.forEach((target) => {
     if((target.protocol === 'udp') && !target.isValidAddress) {
       nextUpdateMilliseconds = INVALID_DNS_UPDATE_MILLISECONDS;
     }
   });
 
   // Perform a DNS lookup on each UDP target
-  raddecTargets.forEach(function(target) {
+  raddecTargets.forEach((target) => {
     if(target.protocol === 'udp') {
-      dns.lookup(target.host, {}, function(err, address, family) {
+      dns.lookup(target.host, {}, (err, address, family) => {
         if(err) {
           handleError(err);
           target.isValidAddress = false;
