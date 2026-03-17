@@ -153,7 +153,7 @@ function forward(raddec, target) {
       post(raddec, target);
       break;
     case 'postgresql':
-      pgHandleRaddec(raddec);
+      pgInsertRaddec(raddec);
       break;
     case 'ua':
       target.host = target.host || DEFAULT_UA_HOST;
