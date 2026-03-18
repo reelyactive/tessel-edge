@@ -3,7 +3,7 @@ tessel-edge
 
 Edge software for the [reelyActive Owl-in-One](https://www.reelyactive.com/products/gateways/#owl-in-one) based on the [Tessel 2](https://tessel.io/) platform.  Forwards [raddecs](https://github.com/reelyactive/raddec/) from a reel module (BLE) and/or from tcpdump (WiFi) to:
 - a remote server via UDP and/or webhook (HTTP POST), _and/or_
-- an Elasticsearch database, _and/or_
+- a PostgreSQL database, _and/or_
 - Google Analytics
 
 For complementary functionality, consider instead:
