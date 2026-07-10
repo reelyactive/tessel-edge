@@ -87,7 +87,7 @@ if(usePostgres) {
       user: config.pgUser,
       password: config.pgPassword,
       host: config.pgHost,
-      database: config.pgDatabase
+      database: config.pgDatabase,
       max: config.pgMaxConnections,
       min: config.pgMinConnections,
       connectionTimeoutMillis: config.pgConnectionTimeoutMilliseconds
