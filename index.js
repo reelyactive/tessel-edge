@@ -237,7 +237,7 @@ function pgInsertRaddec(raddec) {
 
   let flatRaddec = raddec.toFlattened(raddecOptions);
   let text = 'INSERT INTO raddec (transmitterSignature, timestamp, raddec) ' +
-             'VALUES ($1, $2, $3) RETURNING _storeId';
+             'VALUES ($1, $2, $3)';
   let values = [ raddec.signature, new Date(raddec.initialTime),
                  JSON.stringify(flatRaddec) ];
   pgPool.query(text, values, (err, res) => { if(err) { handleError(err); } });
