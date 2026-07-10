@@ -83,10 +83,15 @@ let httpsAgent = new https.Agent({ keepAlive: true });
 // Create PostgreSQL client pool
 let pgPool;
 if(usePostgres) {
-  pgPool = new pg.Pool({ user: config.pgUser,
-                         password: config.pgPassword,
-                         host: config.pgHost,
-                         database: config.pgDatabase });
+  pgPool = new pg.Pool({
+      user: config.pgUser,
+      password: config.pgPassword,
+      host: config.pgHost,
+      database: config.pgDatabase
+      max: config.pgMaxConnections,
+      min: config.pgMinConnections,
+      connectionTimeoutMillis: config.pgConnectionTimeoutMilliseconds
+  });
   pgPool.on('error', (error, client) => { if(error) { handleError(error); } });
   pgPool.connect((error, client, release) => {
     if(error) { handleError(error); }
@@ -226,6 +231,10 @@ function post(data, target, toQueryString) {
  * @param {Raddec} raddec The raddec to insert.
  */
 function pgInsertRaddec(raddec) {
+  if(pgPool.waitingCount >= config.pgMaxWaiting) {
+    return;
+  }
+
   let flatRaddec = raddec.toFlattened(raddecOptions);
   let text = 'INSERT INTO raddec (transmitterSignature, timestamp, raddec) ' +
              'VALUES ($1, $2, $3) RETURNING _storeId';
