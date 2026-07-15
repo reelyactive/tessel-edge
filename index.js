@@ -67,6 +67,11 @@ if(config.enableWatchdog) {
   iterateWatchdog(Date.now());
 }
 
+// Enable scheduled reboot
+if(Number.isFinite(config.scheduledRebootMilliseconds)) {
+  setTimeout(() => { process.exit(1); }, config.scheduledRebootMilliseconds);
+}
+
 // Update DNS
 updateDNS();
 

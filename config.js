@@ -40,6 +40,7 @@ const INCLUDE_PACKETS = true;
 const ENABLE_WATCHDOG = true;
 const WATCHDOG_INTERVAL_MILLISECONDS = 5000;
 const WATCHDOG_LENIENCE_MILLISECONDS = 1000;
+const SCHEDULED_REBOOT_MILLISECONDS = null;
 const IS_DEBUG_MODE = false;
 
 // ---------------------------
@@ -69,4 +70,5 @@ module.exports.includePackets = INCLUDE_PACKETS;
 module.exports.enableWatchdog = ENABLE_WATCHDOG;
 module.exports.watchdogIntervalMilliseconds = WATCHDOG_INTERVAL_MILLISECONDS;
 module.exports.watchdogLenienceMilliseconds = WATCHDOG_LENIENCE_MILLISECONDS;
+module.exports.scheduledRebootMilliseconds = SCHEDULED_REBOOT_MILLISECONDS;
 module.exports.isDebugMode = IS_DEBUG_MODE;
